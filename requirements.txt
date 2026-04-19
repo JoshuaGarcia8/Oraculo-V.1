@@ -1,0 +1,6 @@
+playwright
+playwright-stealth
+google-genai
+pillow
+pillow-heif
+pandas
