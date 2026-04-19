@@ -5,7 +5,7 @@
 [![GitHub forks](https://img.shields.io/github/forks/JoshuaGarcia8/Oraculo-V.1?style=social)](https://github.com/JoshuaGarcia8/Oraculo-V.1)
 [![GitHub license](https://img.shields.io/github/license/JoshuaGarcia8/Oraculo-V.1)](https://github.com/JoshuaGarcia8/Oraculo-V.1)
 
-![Oráculo Banner](assets/banner.png)
+![Oráculo Banner](assets/banner-oraculo-michi.jpg)
 ...
 
 > **"Transformando el caos del stock manual en datos precisos con visión de calidad."**
