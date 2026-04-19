@@ -1,5 +1,13 @@
 # 🧿 Oráculo V.1 - Automatización Inteligente de Inventario
 
+[![GitHub Sync](https://github.com/JoshuaGarcia8/Oraculo-V.1/actions/workflows/sync.yml/badge.svg)](https://github.com/JoshuaGarcia8/Oraculo-V.1/actions)
+[![GitHub stars](https://img.shields.io/github/stars/JoshuaGarcia8/Oraculo-V.1?style=social)](https://github.com/JoshuaGarcia8/Oraculo-V.1)
+[![GitHub forks](https://img.shields.io/github/forks/JoshuaGarcia8/Oraculo-V.1?style=social)](https://github.com/JoshuaGarcia8/Oraculo-V.1)
+[![GitHub license](https://img.shields.io/github/license/JoshuaGarcia8/Oraculo-V.1)](https://github.com/JoshuaGarcia8/Oraculo-V.1)
+
+![Oráculo Banner](assets/banner.png)
+...
+
 > **"Transformando el caos del stock manual en datos precisos con visión de calidad."**
 
 ## 🎯 El Problema
