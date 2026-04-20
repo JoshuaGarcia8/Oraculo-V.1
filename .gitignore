@@ -29,14 +29,15 @@ MANIFEST
 # Data y archivos generados
 data/
 fotos_pedido/
+reporte_automatizacion.csv
 *.csv
-*.jpg
-*.jpeg
-*.png
-*.webp
 *.HEIC
 *.HEIF
-reporte_automatizacion.csv
+
+# 🖼️ EXCEPCIÓN: Ignorar fotos de pedidos pero PERMITIR assets de diseño
+# No ignoramos archivos de imagen de forma global, 
+# sino que ignoramos las carpetas de trabajo:
+fotos_pedido/*
 
 # IDEs
 .vscode/
