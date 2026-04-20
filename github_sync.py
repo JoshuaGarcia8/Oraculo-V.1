@@ -28,6 +28,7 @@ def ejecutar_git(comando, cwd=None):
     except subprocess.TimeoutExpired:
         return False, "⏰ TIMEOUT: Comando tardó demasiado"
     except subprocess.CalledProcessError as e:
+        # Aquí capturamos el error si falla el comando
         return False, e.stderr.strip() if e.stderr else str(e)
 
 def verificar_git_config():
@@ -150,14 +151,16 @@ def takumira_sync(repo_url="https://github.com/JoshuaGarcia8/Oraculo-V.1.git"):
     ok, error = ejecutar_git(f'git commit -m "{mensaje}"')
     
     if not ok:
-        error_lower = error.lower()
+        error_lower = str(error).lower()
         if any(frase in error_lower for frase in ["nothing to commit", "no changes added"]):
             print("🌟 ✨ ¡El Oráculo ya está PERFECTO! No hay cambios nuevos ✨ 🌟")
         else:
             print(f"💥 ERROR COMMIT:\n{error}")
-            print("\n🔧 DEBUG:")
-            debug, _ = ejecutar_git("git status")
-            print(f"   Status: {debug[:200]}...")
+            print("\n🔧 DEBUG (Takumira Patch Applied):")
+            # --- AQUÍ ESTÁ EL PARCHE ---
+            ok_status, mensaje_status = ejecutar_git("git status")
+            print(f"   Status: {mensaje_status[:200]}...")
+            # ---------------------------
             return False
     else:
         print("✅ COMMIT EXITOSO ✓")
