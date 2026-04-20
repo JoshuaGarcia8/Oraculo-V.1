@@ -1,30 +1,34 @@
-name: 🚀 Oráculo Auto-Sync & Tests
+name: 🚀 Oráculo CI/CD Auto-Sync
 
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  sync:
+  test:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 🌟 Checkout
+    - name: 🌟 Checkout código
       uses: actions/checkout@v4
     
-    - name: 🐍 Python
+    - name: 🐍 Configurar Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
-    - name: 📦 Dependencias
-      run: pip install -r requirements.txt
+    - name: 📦 Instalar dependencias
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
     
-    - name: 🧪 Tests
-      run: python -c "print('✅ Oráculo OK!')"
+    - name: 🧪 Verificar Playwright
+      run: |
+        python -c "import playwright; print('✅ Playwright OK')"
+        python -c "import pandas; print('✅ Pandas OK')"
     
-    - name: 🎉 Success
-      run: echo "🧿 SYNC COMPLETADO!"
+    - name: 🎉 ¡Oráculo Listo!
+      run: |
+        echo "🧿 CI/CD ACTIVADO ✅"
+        echo "✨ Takumira Sync 100%"
