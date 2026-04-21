@@ -2,117 +2,120 @@ import asyncio
 import os
 import pandas as pd
 import random
+from google import genai             # <-- Corrige error "genai"
+from PIL import Image                # <-- Corrige error "Image"
 from playwright.async_api import async_playwright
+from pillow_heif import register_heif_opener
 from dotenv import load_dotenv
 
+# 1. SETUP
 load_dotenv()
+register_heif_opener()
 
 def inicializar():
     print("🧘🏼 El Oráculo entra en meditación...")
     for carpeta in ['data', 'fotos_pedido']:
-        os.makedirs(carpeta, exist_ok=True)
-    print("✅ Listo! (Modo BYPASS IA activado)")
+        if not os.path.exists(carpeta):
+            os.makedirs(carpeta)
+    print("✅ Carpetas listas.")
 
-# 🎯 BYPASS IA - Códigos reales de juguetería
-def obtener_codigos_manual():
-    """🔄 Modo emergencia: códigos hardcodeados reales"""
-    codigos = [
-        "AD2020-36", "ADME-080", "CRFE515", "DIT2788", "DIT3010",
-        "DIT3029", "DIT3030", "JYJ0043", "JYJ0044", "JYJ0045",
-        "JYJ0046", "LCFTY4014", "LCSET503", "LCSET504", "LG2027",
-        "LI1501", "SEB51106", "SEB55274"
-    ]
-    print(f"✅ BYPASS IA: {len(codigos)} códigos cargados")
-    return codigos
+def cargar_cliente():
+    api_key = os.getenv('GEMINI_API_KEY')
+    if not api_key:
+        raise SystemExit("❌ Error: Falta la API Key en el .env")
+    return genai.Client(api_key=api_key.strip())
 
+# 2. EXTRACCIÓN (CEREBRO IA)
+async def extraer_codigos(ruta_imagen):
+    client = cargar_cliente()
+    if not os.path.exists(ruta_imagen):
+        print(f"❌ No encuentro la foto en: {ruta_imagen}")
+        return []
+
+    print(f"🧠 Optimizando imagen para ahorrar tokens...")
+    img = Image.open(ruta_imagen)
+    img.thumbnail((1024, 1024)) # Achicamos para gastar menos
+    img = img.convert("RGB")
+
+    prompt = "Extrae códigos de productos. Devolvé solo los códigos separados por comas."
+
+    modelos_a_probar = ["gemini-1.5-flash", "gemini-3-flash-preview", "gemini-2.0-flash"]
+    
+    for modelo in modelos_a_probar:
+        try:
+            response = client.models.generate_content(
+                model=modelo,
+                contents=[prompt, img],
+                config={"temperature": 0.1, "max_output_tokens": 500}
+            )
+            if response.text:
+                tokens = response.usage_metadata.total_token_count
+                print(f"💎 Consumo: {tokens} tokens con {modelo}")
+                return [c.strip() for c in response.text.split(",") if c.strip()]
+        except:
+            continue
+    return []
+
+# 3. VERIFICACIÓN (PLAYWRIGHT)
 async def verificar_smarty(page, codigo):
-    """🕹️ Buscador SmartyCart stealth"""
     try:
-        # URL real SmartyCart
-        url_base = "https://www.smartycart.com.ar/token/0cdedce40a9643385a3d9d745c1295a2c9016ecc"
-        search_url = f"{url_base}?keyword={codigo}"
-        
-        await page.goto(search_url, wait_until="networkidle", timeout=20000)
-        await asyncio.sleep(random.uniform(1.5, 2.5))
-        
-        # Detectar producto (múltiples selectores)
-        selectores = [
-            ".product-item", ".item-image-primary", 
-            ".product-name", "[class*='product']",
-            "img[src*='.jpg']"
-        ]
-        
-        elemento = None
-        for selector in selectores:
-            elemento = await page.query_selector(selector)
-            if elemento:
-                break
-        
-        estado = "✅ ENCONTRADO" if elemento else "❌ NO ENCONTRADO"
-        
-        # 📸 Evidencia
-        foto_path = f"fotos_pedido/{codigo}.png"
-        await page.screenshot(path=foto_path, full_page=True)
-        
-        print(f"   📸 {foto_path} guardada")
+        url = f"https://www.smartycart.com.ar/token/0cdedce40a9643385a3d9d745c1295a2c9016ecc?keyword={codigo}"
+        await page.goto(url, timeout=20000)
+        await asyncio.sleep(1.5)
+        producto = await page.query_selector(".product-item, .product-name, h1, .title")
+        estado = "Encontrado" if producto else "No encontrado"
+        await page.screenshot(path=f"fotos_pedido/{codigo}.png")
         return estado
-        
-    except Exception as e:
-        return f"⚠️ ERROR: {str(e)[:30]}"
+    except:
+        return "Error de Red"
 
+# 4. FLUJO PRINCIPAL (CON IDEA PRO CORREGIDA)
 async def run():
     inicializar()
-    FOLDER_FOTOS = "fotos_pedido"
-    os.makedirs(FOLDER_FOTOS, exist_ok=True)
+    archivo_pedido = "./data/fotopedido.HEIC"
+    archivo_csv = "./data/reporte_automatizacion.csv"
     
-    # 🎯 Códigos reales (sin IA)
-    codigos = obtener_codigos_manual()
-    
-    print(f"\n🎯 SMARTYCART HUNT: {len(codigos)} ítems")
-    resultados = []
+    codigos = []
+    # 🚀 IDEA PRO: Reutilizar CSV si existe
+    if os.path.exists(archivo_csv):
+        print("💡 Encontré un reporte anterior.")
+        resp = input("¿Reutilizar los códigos del CSV para no gastar tokens? (s/n): ").lower()
+        if resp == 's':
+            df_temp = pd.read_csv(archivo_csv)
+            if 'Código' in df_temp.columns:
+                codigos = df_temp['Código'].dropna().unique().tolist()
+                print(f"♻️ Reutilizando {len(codigos)} códigos.")
 
-    # 🕹️ Playwright stealth mode
+    # Si no hay códigos, le pedimos a la IA
+    if not codigos:
+        codigos = await extraer_codigos(archivo_pedido)
+    
+    if not codigos:
+        print("❌ No se obtuvieron códigos.")
+        return
+
+    # --- AQUÍ DEFINIMOS RESULTADOS (Corrige error "resultados" is not defined) ---
+    resultados = [] 
+
+    print(f"🎯 Iniciando verificación de {len(codigos)} productos...")
+
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=False, 
-            slow_mo=1200,
-            args=['--disable-blink-features=AutomationControlled']
-        )
+        browser = await p.chromium.launch(headless=False)
+        page = await browser.new_page()
         
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={'width': 1366, 'height': 768}
-        )
-        page = await context.new_page()
-        
-        # Anti-detección
-        await page.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-            delete navigator.__proto__.webdriver;
-        """)
-        
-        for i, codigo in enumerate(codigos):
-            print(f"\n🔍 [{i+1}/{len(codigos)}] {codigo}")
-            estado = await verificar_smarty(page, codigo)
-            resultados.append({"Código": codigo, "Estado": estado})
-            
-            # Pausa humana anti-ban
-            pausa = random.uniform(3, 6)
-            print(f"⏳ Espera humana: {pausa:.1f}s")
-            await asyncio.sleep(pausa)
+        for i, cod in enumerate(codigos):
+            estado = await verificar_smarty(page, cod)
+            # Guardamos en la lista que definimos arriba
+            resultados.append({"Código": cod, "Estado": estado}) 
+            print(f"🔍 {i+1}/{len(codigos)}: {cod} -> {estado}")
+            await asyncio.sleep(random.uniform(1, 2))
         
         await browser.close()
 
-    # 📊 Reporte profesional
-    df = pd.DataFrame(resultados)
-    reporte_path = "./data/reporte_oraculo.csv"
-    df.to_csv(reporte_path, index=False)
-    
-    encontrados = sum(1 for r in resultados if "✅" in r["Estado"])
-    print(f"\n🎉 MISSION COMPLETE!")
-    print(f"✅ Encontrados: {encontrados}/{len(resultados)}")
-    print(f"📊 Reporte: {reporte_path}")
-    print(f"🖼️  Evidencias: fotos_pedido/")
+    # 📊 Guardar Reporte Final
+    df_final = pd.DataFrame(resultados)
+    df_final.to_csv(archivo_csv, index=False)
+    print(f"\n🎉 ¡MISIÓN CUMPLIDA! Reporte guardado en {archivo_csv}")
 
 if __name__ == "__main__":
     asyncio.run(run())
